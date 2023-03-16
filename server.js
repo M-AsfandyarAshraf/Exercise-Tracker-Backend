@@ -80,7 +80,15 @@ app.post("/login",async (req,res)=>{
   else{
     const Token = JWT.sign({id:result["_id"]},secret)
 
-    res.status(200).json({ token: Token, message:"Logged in"});
+    res.status(200).json(
+      { 
+        token: Token, 
+        message:"Logged in",
+        name: result.name,
+        email: result.email,
+        exercises: result.exercises
+      
+      });
       
   }
 })
