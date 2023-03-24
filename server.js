@@ -97,31 +97,81 @@ app.post("/login",async (req,res)=>{
 
 
 
-app.get("/user", async (req,res) =>
+app.post("/exercises", async (req,res) =>
 {
+  const {exercises} = req.body;
+  console.log(req.body)
+  const list =[];
+  var message="";
 
-  let token = req.headers.token;
-  // token = token.slice(7);
-  console.log(token)
+    for (index = 0; index <exercises.length; index++) {
 
-  JWT.verify(token, secret , async(err,data)=> {
-    if(err){
-        res.status(401).send("Not Verified")
+      try {
+        var a = await Exercise.findById(exercises[index])
+        list.push(a);
+      }
+      catch (err){
+        res.status(400).json(err);
+
+      }
+            
+        
     }
 
-    else{
-
-      const result  = await User.find({_id:data.id}) 
-      if(result==null){
-        res.status(401).json({message: "No User Found"})
-       }
+      if (list === null || list.length == 0)
+      {
+        res.status(200).json("No Exercises Added");
+      }
       else{
-      res.status(200).json({User: result, message:"User Found"})
-    }
-   }
-  })
+        res.status(200).json(list);
+        console.log(list)
+      }
+
 
 })
+
+
+
+
+app.post("/exercise",async (req,res)=>{
+  const {title, duration, date} = req.body
+  const token =  req.headers.token;
+  const newDate = new Date(date);
+  console.log(req.body)
+  // Date from frontend must be fomrat (MM/DD/YY)
+  try{
+  const result = await  Exercise.create({title, duration, date:newDate})
+
+
+  JWT.verify(token, secret , async(err,data)=> {
+      if(err){
+          res.status(401).send("Not Verified")
+      }
+      else 
+      {
+        const exercises  = await User.findByIdAndUpdate(data.id,
+        {$push: {"exercises": result._id}},
+        {upsert: true, new : true}        
+        )
+      res.status(200).json(
+        {
+          name: exercises.name,
+          email: exercises.email,
+          exercises: exercises.exercises,
+          message:"User  Exercises Updated"}) 
+      }
+    })
+  
+  }
+  catch(err){
+      res.json("Exercise Not Created" + err )
+  }
+
+})
+
+
+
+
 
 
 
